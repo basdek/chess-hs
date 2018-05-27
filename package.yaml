@@ -1,0 +1,50 @@
+name:                chess-hs
+version:             0.1.0.0
+github:              "basdek/chess-hs"
+license:             MIT
+author:              "Bas de Kwant"
+maintainer:          "basdekwant@gmail.com"
+copyright:           "2018 Bas de Kwant"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/basdek/chess-hs#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- hspec
+- HUnit
+library:
+  source-dirs: src
+
+executables:
+  chess-hs-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - chess-hs
+
+tests:
+  chess-hs-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - chess-hs
+    - hspec 
