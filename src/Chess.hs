@@ -8,7 +8,9 @@ module Chess
     Board,
     legalMoves,
     positionExtractor,
-    consPosM
+    consPosM,
+    pieceInstances2Board,
+    board2PieceInstances
   ) where
 
 import Data.Maybe
@@ -87,18 +89,32 @@ pieceExtractor :: PieceInstance -> Piece
 pieceExtractor (PieceInstance _ p _) = p
 --End Pieceinstance + basic getters
 
+-- Castling --
+data Side = QueenSide | KingSide
+data Castling = Castling Color Side Bool
 
 --Board
-type Board = [PieceInstance]
+data Board = Board {getPis :: [PieceInstance], castleRights :: (Castling, Castling, Castling, Castling)}
 
 --If at some point we change the Board structure to be more complicated, this will help us greatly.
 board2PieceInstances :: Board -> [PieceInstance]
-board2PieceInstances b = b
+board2PieceInstances b = getPis b
 
 --If at some point we change the Board structure to be more complicated, this will help us greatly.
 pieceInstances2Board :: [PieceInstance] -> Board
-pieceInstances2Board ps = ps
+pieceInstances2Board ps = Board ps (
+  Castling White KingSide  True,
+  Castling White QueenSide True,
+  Castling Black KingSide  True,
+  Castling White QueenSide True)
 --End board
+
+-- Game
+newGame :: Board
+newGame =
+  let pieceInstances = []
+  in (pieceInstances2Board pieceInstances)
+--
 
 
 
@@ -109,7 +125,7 @@ board2pospiece :: Board -> [PosPiece]
 board2pospiece board = map (\p -> (positionExtractor p, p)) $ board2PieceInstances board --TODO: use tupelize
 
 collisions :: [Position] -> Board -> [PosPiece]
-collisions reach board = filter (\t -> fst t `elem` reach) $ board2pospiece $ board2PieceInstances board
+collisions reach board = filter (\t -> fst t `elem` reach) $ board2pospiece board
 
 
 --Pieceinstance filters
@@ -149,7 +165,7 @@ legalMoves (PieceInstance color Knight (Position x y)) board =
       vRange = map (\t -> [(fst t + 1, snd t), (fst t - 1, snd t)]) [(x, y + 2), (x, y - 2)]
       reach = catMaybes $ map tupleToPosM $ concat $ hRange ++ vRange
       allCollisions :: [PosPiece] --Get all collisions in the theoretic reach
-      allCollisions = collisions reach $ board2PieceInstances board
+      allCollisions = collisions reach board
       selfOccupied = map fst $ posPieceFilter (colorFilter color) allCollisions
       --One can't take the enemyKing
       enemyKing = map fst $ posPieceFilter (allP [(colorFilter $ cflip color), kingFilter]) allCollisions
@@ -161,9 +177,9 @@ legalMoves (PieceInstance color King (Position x y)) board =
       close = Closer $ anyP [colorFilter color, kingFilter]
       collisionJudgement = map (posPiece2D semiClose close) $ board2pospiece board
       vrangeF  = getRange collisionJudgement $ return (consPosM x (y + 1))
-      vrangeB  = getRange collisionJudgement $ return (consPosM x (y -1))
-      hrangeF  = getRange collisionJudgement $ return (flip consPosM y (x + 1))
-      hrangeB  = getRange collisionJudgement $ return (flip consPosM y (x - 1))
+      vrangeB  = getRange collisionJudgement $ return (consPosM x (y - 1))
+      hrangeF  = getRange collisionJudgement $ return (consPosM (x + 1) y)
+      hrangeB  = getRange collisionJudgement $ return (consPosM (x - 1) y)
       drangeLF = getRange collisionJudgement $ return $ tupleToPosM (x + 1, y + 1)
       drangeLB = getRange collisionJudgement $ return $ tupleToPosM (x + 1, y - 1)
       drangeRF = getRange collisionJudgement $ return $ tupleToPosM (x - 1, y + 1)
@@ -198,11 +214,11 @@ legalMoves (PieceInstance color Rook (Position x y)) board =
   let semiClose = SemiCloser $ colorFilter $ cflip color
       close = Closer $ anyP [colorFilter color, kingFilter]
       collisionJudgement = map (posPiece2D semiClose close) $ board2pospiece board
-      vrange =  getRange collisionJudgement $ map (consPosM x) $ map ((+) y) [1..7]
-      vrange2 = getRange collisionJudgement $ map (consPosM x) $ map ((-) y) [1..7]
-      hrange =  getRange collisionJudgement $ map (flip consPosM y) $ map ((+) x) [1..7]
-      hrange2 = getRange collisionJudgement $ map (flip consPosM y) $ map ((-) x) [1..7]
-  in (unliftD $ vrange ++ vrange2 ++ hrange ++ hrange2)
+      vrangeF = getRange collisionJudgement $ map (consPosM x) $ map ((+) y) [1..7]
+      vrangeB = getRange collisionJudgement $ map (consPosM x) $ map ((-) y) [1..7]
+      hrangeF = getRange collisionJudgement $ map (flip consPosM y) $ map ((+) x) [1..7]
+      hrangeB = getRange collisionJudgement $ map (flip consPosM y) $ map ((-) x) [1..7]
+  in (unliftD $ vrangeF ++ vrangeB ++ hrangeF ++ hrangeB)
 
 legalMoves (PieceInstance White Pawn (Position x y)) board = --y should be lower than 2, represent that?
   let range = if y == 2 then [1..2] else [1]
