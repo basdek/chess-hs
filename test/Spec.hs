@@ -252,7 +252,7 @@ spec =   do
          pieceInstances = map (\n -> piece $ Position n 2) [1..8]
          legalMovesCounts = map (length . (legalMovesF (pieceInstances2Board []))) pieceInstances --TODO board is not empty, contains piece
      in(sequence_(map (\count -> count `shouldBe` 2) legalMovesCounts))
-    it "should have two forward reachable fields from starting position as White" $
+    it "should have two forward reachable fields from starting position as Black" $
      let piece = PieceInstance Black Pawn
          pieceInstances = map (\n -> piece $ Position n 7) [1..8]
          legalMovesCounts = map (length . (legalMovesF (pieceInstances2Board []))) pieceInstances --TODO board is not empty, contains piece
