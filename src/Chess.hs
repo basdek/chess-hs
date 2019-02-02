@@ -264,7 +264,7 @@ legalMoves (PieceInstance White Pawn (Position x y)) board = --y should be lower
   in (moves)
 
 legalMoves (PieceInstance Black Pawn (Position x y)) board = --y should be higher than 6, represent that?
-  let range = if y == 6 then [1..2] else [1]
+  let range = if y == 7 then [1..2] else [1]
       direction = (-)
       moves = pawnMovement range x y Black direction board
   in (moves)

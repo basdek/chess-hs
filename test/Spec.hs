@@ -24,6 +24,8 @@ positionPlusX (Position x y) n = consPosM (x+n) y
 positionPlusY :: Position -> Int -> Maybe Position
 positionPlusY (Position x y) n = consPosM x (y+n)
 
+--TODO: assert list of valid moves is always only containing unique values!
+
 spec :: Spec
 spec =   do
   describe "Chess.Spec allPositions" $ do
@@ -183,11 +185,12 @@ spec =   do
 
 
   describe "Chess.legalMoves Pawn" $ do
-    it "should move in one forward direction when White, \non an empty board, have 6 possible consecutive moves." $
+    it "should move in one forward direction when White, \non an empty board, have 5 possible moves from start +1." $
       let boardPieces = []
           board = pieceInstances2Board boardPieces
           pi = PieceInstance White Pawn
-          positions = map pi $ catMaybes $ map (consPosM 1) [3,4,5,6,7]
+          verticalTargets = [3,4,5,6,7]
+          positions = map pi $ catMaybes $ map (consPosM 1) verticalTargets
           moves = tuplizeMap (legalMovesF board) positions
           expectedPos = (\pi -> flip positionPlusY 1 $ positionExtractor pi)
           assertions        = foldl (\s (pi :: PieceInstance, mv :: [Position]) ->
@@ -196,12 +199,13 @@ spec =   do
                                      assertBool ("For " ++ show pi ++ "an expected position was " ++ (show $ expectedPos pi) ++ " got " ++ (show mv))
                                       (isJust $ expectedPos pi >>= (\s -> find (\q -> q == s) mv)) :
                                      s) [] moves
-      in(sequence_(assertions) >> (length assertions `shouldBe` 6*2))
-    it "should move in one forward direction when Black, \non an empty board, have 6 possible consecutive moves." $
+      in(sequence_(assertions) >> (length assertions `shouldBe` (length verticalTargets)*2))
+    it "should move in one forward direction when Black, \non an empty board, have 6 possible moves from start -1." $
       let boardPieces = []
           board = pieceInstances2Board boardPieces
           pi = PieceInstance Black Pawn
-          positions = map pi $ catMaybes $ map (consPosM 1) [6,5,4,3,2]
+          verticalTargets = [2,3,4,5,6]
+          positions = map pi $ catMaybes $ map (consPosM 1) verticalTargets
           moves = tuplizeMap (legalMovesF board) positions
           expectedPos = (\pi -> flip positionPlusY (-1) $ positionExtractor pi)
           assertions        = foldl (\s (pi :: PieceInstance, mv :: [Position]) ->
@@ -210,7 +214,7 @@ spec =   do
                                      assertBool ("For " ++ show pi ++ "an expected position was " ++ (show $ expectedPos pi) ++ " got " ++ (show mv))
                                       (isJust $ expectedPos pi >>= (\s -> find (\q -> q == s) mv)) :
                                      s) [] moves
-      in(sequence_(assertions) >> (length assertions `shouldBe` 6*2))
+      in(sequence_(assertions) >> (length assertions `shouldBe` (length verticalTargets)*2))
     it "should be able to hit enemy pieces left and right when White." $
       let boardPieces = [PieceInstance Black Knight $ Position 3 6,
                          PieceInstance Black Bisshop $ Position 1 6]
@@ -243,6 +247,16 @@ spec =   do
          (assertEqual "For white the only option should be to move forward"
           (return $ head movesW) (flip positionPlusY 1 $ positionExtractor piW))
         )
+    it "should have two forward reachable fields from starting position as White" $
+     let piece = PieceInstance White Pawn
+         pieceInstances = map (\n -> piece $ Position n 2) [1..8]
+         legalMovesCounts = map (length . (legalMovesF (pieceInstances2Board []))) pieceInstances --TODO board is not empty, contains piece
+     in(sequence_(map (\count -> count `shouldBe` 2) legalMovesCounts))
+    it "should have two forward reachable fields from starting position as White" $
+     let piece = PieceInstance Black Pawn
+         pieceInstances = map (\n -> piece $ Position n 7) [1..8]
+         legalMovesCounts = map (length . (legalMovesF (pieceInstances2Board []))) pieceInstances --TODO board is not empty, contains piece
+     in(sequence_(map (\count -> count `shouldBe` 2) legalMovesCounts))
 
 
   describe "Chess.legalMoves Queen" $ do
