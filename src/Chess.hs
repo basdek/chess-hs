@@ -8,9 +8,11 @@ module Chess
     Board,
     legalMoves,
     positionExtractor,
+    colorExtractor,
     consPosM,
     pieceInstances2Board,
-    board2PieceInstances
+    board2PieceInstances,
+    newGame
   ) where
 
 import Data.Maybe
@@ -90,11 +92,11 @@ pieceExtractor (PieceInstance _ p _) = p
 --End Pieceinstance + basic getters
 
 -- Castling --
-data Side = QueenSide | KingSide
-data Castling = Castling Color Side Bool
+data Side = QueenSide | KingSide deriving Show
+data Castling = Castling Color Side Bool deriving Show
 
 --Board
-data Board = Board {getPis :: [PieceInstance], castleRights :: (Castling, Castling, Castling, Castling)}
+data Board = Board {getPis :: [PieceInstance], castleRights :: (Castling, Castling, Castling, Castling)} deriving Show
 
 --If at some point we change the Board structure to be more complicated, this will help us greatly.
 board2PieceInstances :: Board -> [PieceInstance]
@@ -112,7 +114,42 @@ pieceInstances2Board ps = Board ps (
 -- Game
 newGame :: Board
 newGame =
-  let pieceInstances = []
+  let pieceInstances = [
+        PieceInstance White Rook    $ Position 1 1,
+        PieceInstance White Knight  $ Position 2 1,
+        PieceInstance White Bisshop $ Position 3 1,
+        PieceInstance White Queen   $ Position 4 1,
+        PieceInstance White King    $ Position 5 1,
+        PieceInstance White Bisshop $ Position 6 1,
+        PieceInstance White Knight  $ Position 7 1,
+        PieceInstance White Rook    $ Position 8 1,
+
+        PieceInstance White Pawn $ Position 1 2,
+        PieceInstance White Pawn $ Position 2 2,
+        PieceInstance White Pawn $ Position 3 2,
+        PieceInstance White Pawn $ Position 4 2,
+        PieceInstance White Pawn $ Position 5 2,
+        PieceInstance White Pawn $ Position 6 2,
+        PieceInstance White Pawn $ Position 7 2,
+        PieceInstance White Pawn $ Position 8 2,
+
+        PieceInstance Black Pawn $ Position 1 7,
+        PieceInstance Black Pawn $ Position 2 7,
+        PieceInstance Black Pawn $ Position 3 7,
+        PieceInstance Black Pawn $ Position 4 7,
+        PieceInstance Black Pawn $ Position 5 7,
+        PieceInstance Black Pawn $ Position 6 7,
+        PieceInstance Black Pawn $ Position 7 7,
+        PieceInstance Black Pawn $ Position 8 7,
+
+        PieceInstance Black Rook    $ Position 1 8,
+        PieceInstance Black Knight  $ Position 2 8,
+        PieceInstance Black Bisshop $ Position 3 8,
+        PieceInstance Black Queen   $ Position 4 8,
+        PieceInstance Black King    $ Position 5 8,
+        PieceInstance Black Bisshop $ Position 6 8,
+        PieceInstance Black Knight  $ Position 7 8,
+        PieceInstance Black Rook    $ Position 8 8]
   in (pieceInstances2Board pieceInstances)
 --
 
@@ -232,14 +269,18 @@ legalMoves (PieceInstance Black Pawn (Position x y)) board = --y should be highe
       moves = pawnMovement range x y Black direction board
   in (moves)
 
+
 pawnMovement :: [Int] -> Int -> Int -> Color -> (Int -> Int -> Int) -> Board -> [Position]
 pawnMovement range x y color direction board =
   let takeablePositions = catMaybes $ map tupleToPosM [(x+1, direction y 1), (x-1, direction y 1)]
+      pospieces :: [PosPiece] = board2pospiece board
+      q = map fst pospieces
+      z :: [Position] = filter (\pos -> pos `elem` q) takeablePositions
       closer  = Closer $ anyP [colorFilter color, kingFilter]
-      semiCloser = SemiCloser  $ allP [colorFilter $ cflip color, positionsFilter takeablePositions]
-      collisionJudgement = map (posPiece2D semiCloser closer) $ board2pospiece board
+      semiCloser = SemiCloser  $ allP [colorFilter $ cflip color]
+      collisionJudgement = map (posPiece2D semiCloser closer) pospieces
       forward =    getRange collisionJudgement $ map (consPosM x) $ map (direction y) range
-      takeLeft =   getRange collisionJudgement $ return $ headOption takeablePositions
-      takeRight =  getRange collisionJudgement $ return $ headOption $ drop 1 takeablePositions
-  in (unliftD $ forward  ++ takeRight ++ takeLeft)
+      take1 =   getRange collisionJudgement $ return $ headOption z
+      take2 =  getRange collisionJudgement $ return $ headOption $ drop 1 z
+  in (unliftD $ forward ++ take1 ++ take2)
 

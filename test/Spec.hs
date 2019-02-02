@@ -187,24 +187,30 @@ spec =   do
       let boardPieces = []
           board = pieceInstances2Board boardPieces
           pi = PieceInstance White Pawn
-          positions = map pi $ catMaybes $ map (consPosM 1) [2,3,4,5,6,7]
+          positions = map pi $ catMaybes $ map (consPosM 1) [3,4,5,6,7]
           moves = tuplizeMap (legalMovesF board) positions
           expectedPos = (\pi -> flip positionPlusY 1 $ positionExtractor pi)
-          assertions = map (\(pi, mov) -> assertBool
-                               ("For " ++ show pi ++ "an expected position was " ++ (show $ expectedPos pi) ++ " got " ++ (show $ legalMoves pi board)) $
-                                isJust $ (expectedPos pi >>= (\s -> find (\q -> q == s) mov))) moves
-      in(sequence_(assertions) >> (length assertions `shouldBe` 6))
+          assertions        = foldl (\s (pi :: PieceInstance, mv :: [Position]) ->
+                                     assertBool ("For " ++ show pi ++ " expected 1 position, got " ++ show mv)
+                                      (length mv == 1) :
+                                     assertBool ("For " ++ show pi ++ "an expected position was " ++ (show $ expectedPos pi) ++ " got " ++ (show mv))
+                                      (isJust $ expectedPos pi >>= (\s -> find (\q -> q == s) mv)) :
+                                     s) [] moves
+      in(sequence_(assertions) >> (length assertions `shouldBe` 6*2))
     it "should move in one forward direction when Black, \non an empty board, have 6 possible consecutive moves." $
       let boardPieces = []
           board = pieceInstances2Board boardPieces
           pi = PieceInstance Black Pawn
-          positions = map pi $ catMaybes $ map (consPosM 1) [7,6,5,4,3,2]
+          positions = map pi $ catMaybes $ map (consPosM 1) [6,5,4,3,2]
           moves = tuplizeMap (legalMovesF board) positions
           expectedPos = (\pi -> flip positionPlusY (-1) $ positionExtractor pi)
-          assertions = map (\(pi, mov) -> assertBool
-                               ("For " ++ show pi ++ "an expected position was " ++ (show $ expectedPos pi) ++ " got " ++ (show $ legalMoves pi board)) $
-                                isJust $ (expectedPos pi >>= (\s -> find (\q -> q == s) mov))) moves
-      in(sequence_(assertions) >> (length assertions `shouldBe` 6))
+          assertions        = foldl (\s (pi :: PieceInstance, mv :: [Position]) ->
+                                     assertBool ("For " ++ show pi ++ " expected 1 position, got " ++ show mv)
+                                      (length mv == 1) :
+                                     assertBool ("For " ++ show pi ++ "an expected position was " ++ (show $ expectedPos pi) ++ " got " ++ (show mv))
+                                      (isJust $ expectedPos pi >>= (\s -> find (\q -> q == s) mv)) :
+                                     s) [] moves
+      in(sequence_(assertions) >> (length assertions `shouldBe` 6*2))
     it "should be able to hit enemy pieces left and right when White." $
       let boardPieces = [PieceInstance Black Knight $ Position 3 6,
                          PieceInstance Black Bisshop $ Position 1 6]
@@ -212,7 +218,7 @@ spec =   do
           pi = PieceInstance White Pawn $ Position 2 5
           moves = legalMoves pi board
       in ((length moves `shouldBe` 3) >>
-          (moves `shouldContain` (map positionExtractor $ board2PieceInstances board))
+          (sequence_ (map (\(p :: PieceInstance) -> 1 `shouldBe` 2 )  $ board2PieceInstances board))
          )
     it "should be able to hit enemy pieces left and right when Black." $
       let boardPieces = [PieceInstance White Knight $ Position 3 2,
@@ -267,6 +273,16 @@ spec =   do
           pi = PieceInstance Black Queen $ Position 4 1
           moves = legalMoves pi $ pieceInstances2Board boardPieces
       in ((length moves `shouldBe` 18) >> (moves `shouldNotContain` [enemyOccPos]))
+
+  describe "Chess.newGame moves" $ do
+    --20 because: 8 pawns with a 1 step and 2 step, 4 knight moves
+    it "should have 20 moves as total possible first moves for white" $
+      let board = newGame
+          whitePieces = filter (\p -> colorExtractor p == White) $ board2PieceInstances board
+          lm = tuplizeMap (legalMovesF board) whitePieces
+          sum = foldl (\s (p :: PieceInstance, l :: [Position]) -> s +  length l) 0 lm
+      in (sum `shouldBe` 20)
+
 
 
 
