@@ -1,0 +1,14 @@
+{
+  "name": "chesshs-frontend",
+  "version": "0.0.1",
+  "description": "Frontend for chesshs-frontend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bas de Kwant",
+  "license": "MIT",
+  "dependencies": {
+    "chessboardjs": "*"
+  }
+}
