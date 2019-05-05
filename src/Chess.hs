@@ -12,7 +12,8 @@ module Chess
     consPosM,
     pieceInstances2Board,
     board2PieceInstances,
-    newGame
+    newGame,
+    humanReadablePosition
   ) where
 
 import Data.Maybe
@@ -74,7 +75,7 @@ tupleToPosM :: (Int, Int) -> Maybe Position
 tupleToPosM (x,y) = consPosM x y
 
 humanReadablePosition :: Position -> (Char, Int)
-humanReadablePosition (Position x y) = let letters = ['A'..'H']
+humanReadablePosition (Position x y) = let letters = ['a'..'h']
                                            letter = letters !! (x - 1)
                                         in (letter, y)
 --End position and constructors
@@ -96,7 +97,9 @@ data Side = QueenSide | KingSide deriving Show
 data Castling = Castling Color Side Bool deriving Show
 
 --Board
-data Board = Board {getPis :: [PieceInstance], castleRights :: (Castling, Castling, Castling, Castling)} deriving Show
+data Board = Board {getPis :: [PieceInstance],
+                    castleRights :: (Castling, Castling, Castling, Castling),
+                    moveHistory :: [String]} deriving Show
 
 --If at some point we change the Board structure to be more complicated, this will help us greatly.
 board2PieceInstances :: Board -> [PieceInstance]
@@ -109,6 +112,7 @@ pieceInstances2Board ps = Board ps (
   Castling White QueenSide True,
   Castling Black KingSide  True,
   Castling White QueenSide True)
+  []
 --End board
 
 -- Game

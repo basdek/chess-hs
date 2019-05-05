@@ -1,0 +1,18 @@
+.square-55d63.black-3c85d.hl {
+    background: #49B36B;
+}
+.square-55d63.white-1e1d7.hl {
+    background: #C2FFD5;
+}
+.square-55d63.white-1e1d7.hl-origin {
+    border: #49B36B 2px solid;
+    box-sizing: border-box;
+}
+.square-55d63.black-3c85d.hl-origin {
+    border: #C2FFD5 2px solid;
+    box-sizing: border-box;
+}
+body {
+    background: #212121;
+    color: #cecece;
+}
